@@ -9,8 +9,8 @@ RUN npm install -g pnpm
 # Copiar archivos de dependencias primero para mejor cache
 COPY package.json pnpm-lock.yaml ./
 
-# Instalar dependencias usando pnpm
-RUN pnpm install --frozen-lockfile --prefer-offline
+# Instalar dependencias usando pnpm (actualiza lockfile automáticamente)
+RUN pnpm install --no-frozen-lockfile --prefer-offline
 
 # Copiar el resto del código fuente
 COPY . .
