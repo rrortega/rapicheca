@@ -5,22 +5,46 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        # Variables de build para Appwrite
+        VITE_APPWRITE_HOST: ${VITE_APPWRITE_HOST:-https://aw.chamba.pro}
+        VITE_APPWRITE_PROJECT_ID: ${VITE_APPWRITE_PROJECT_ID:-69083e13001189dca41d}
+        VITE_APPWRITE_API_KEY: ${VITE_APPWRITE_API_KEY}
+    image: estudios-socioeconomicos:${BUILD_TAG:-latest}
     container_name: estudios-socioeconomicos-app
+    restart: unless-stopped
     ports:
-      - "3000:80"
+      - "80:80"
     environment:
       - NODE_ENV=production
-    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.estudios-socioeconomicos.rule=Host(`localhost`)"
+      - "traefik.http.routers.estudios-socioeconomicos.rule=Host(`${DOMAIN:-localhost}`)"
+      - "traefik.http.routers.estudios-socioeconomicos.tls=true"
+      - "traefik.http.routers.estudios-socioeconomicos.tls.certresolver=letsencrypt"
       - "traefik.http.services.estudios-socioeconomicos.loadbalancer.server.port=80"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
     
   # Para desarrollo local con hot reload (opcional)
   estudios-socioeconomicos-dev:
     build:
       context: .
       dockerfile: Dockerfile.dev
+      args:
+        # Variables de desarrollo
+        VITE_APPWRITE_HOST: ${VITE_APPWRITE_HOST:-https://aw.chamba.pro}
+        VITE_APPWRITE_PROJECT_ID: ${VITE_APPWRITE_PROJECT_ID:-69083e13001189dca41d}
+        VITE_APPWRITE_API_KEY: ${VITE_APPWRITE_API_KEY}
     container_name: estudios-socioeconomicos-dev
     ports:
       - "5173:5173"

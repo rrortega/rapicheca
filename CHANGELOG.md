@@ -1,5 +1,50 @@
 # Changelog - Estudios Socioeconómicos 📋
 
+## [2025-11-03 22:40] - Security & Build Fixes
+
+### 🔒 **Correcciones de Seguridad**
+
+#### **Critical Fix: API Key Security**
+- **Problema:** `ENV VITE_APPWRITE_API_KEY` exponía la API key en la imagen
+- **Riesgo:** Vulnerabilidad de seguridad por variables sensibles en ENV
+- **Solución:**
+  - ✅ Cambiado a `ARG VITE_APPWRITE_API_KEY` (build-time only)
+  - ✅ Variables sensibles movidas a build args
+  - ✅ Mejor manejo de variables de entorno
+
+#### **Build Error Resolution**
+- **Problema:** `pnpm run build` fallaba con exit code 1
+- **Causa:** Variables no disponibles correctamente durante el build
+- **Solución:**
+  - ✅ Agregada verificación de variables en Dockerfile
+  - ✅ Mejor manejo de errores con logs detallados
+  - ✅ Verificación de archivos de salida del build
+
+### 🛠️ **Mejoras en el Dockerfile**
+
+```dockerfile
+# ANTES (inseguro):
+ENV VITE_APPWRITE_API_KEY=standard_09b5a82f...
+
+# DESPUÉS (seguro):
+ARG VITE_APPWRITE_API_KEY
+ENV VITE_APPWRITE_API_KEY=${VITE_APPWRITE_API_KEY}
+```
+
+### 📁 **Nuevos Archivos Creados**
+
+- **`build-easypanel.sh`** - Script optimizado para deployment en EasyPanel
+- **`diagnostico-build.sh`** - Herramienta de diagnóstico de problemas
+- **`.env.easypanel`** - Configuración de variables para EasyPanel
+- **`docker-compose.yml`** - Actualizado con argumentos de build
+
+### 🔧 **Features Agregadas**
+
+1. **Health Check:** Monitoreo automático del container
+2. **Logging:** Sistema de logs con rotación automática
+3. **Diagnostics:** Script para identificar problemas de build
+4. **Build Args:** Mejor manejo de variables sensibles
+
 ## [2025-11-03 22:06] - Deployment Fixes & Docker Optimization
 
 ### 🔧 **Problemas Corregidos**

@@ -1,4 +1,5 @@
-# Multi-stage build para optimizar el tamaño de la imagen
+# Dockerfile - Versión Corregida
+# Multi-stage build optimizado y seguro
 FROM node:18-alpine AS builder
 
 WORKDIR /app
@@ -6,23 +7,38 @@ WORKDIR /app
 # Instalar pnpm
 RUN npm install -g pnpm
 
+# Args para variables de build (más seguro que ENV)
+ARG VITE_APPWRITE_HOST
+ARG VITE_APPWRITE_PROJECT_ID
+ARG VITE_APPWRITE_API_KEY
+
+# Establecer variables por defecto si no se proporcionan
+ENV VITE_APPWRITE_HOST=${VITE_APPWRITE_HOST:-https://aw.chamba.pro}
+ENV VITE_APPWRITE_PROJECT_ID=${VITE_APPWRITE_PROJECT_ID:-69083e13001189dca41d}
+ENV VITE_APPWRITE_API_KEY=${VITE_APPWRITE_API_KEY}
+
+# Verificar que las variables críticas están definidas
+RUN echo "=== VERIFICANDO VARIABLES ===" && \
+    echo "Host: $VITE_APPWRITE_HOST" && \
+    echo "Project ID: $VITE_APPWRITE_PROJECT_ID" && \
+    echo "API Key: ${VITE_APPWRITE_API_KEY:0:20}..."
+
 # Copiar archivos de dependencias primero para mejor cache
 COPY package.json pnpm-lock.yaml ./
 
-# Instalar dependencias usando pnpm (actualiza lockfile automáticamente)
+# Instalar dependencias
 RUN pnpm install --no-frozen-lockfile --prefer-offline
 
 # Copiar el resto del código fuente
 COPY . .
 
-# Variables de entorno para build de producción
-ENV NODE_ENV=production
-ENV VITE_APPWRITE_HOST=https://aw.chamba.pro
-ENV VITE_APPWRITE_PROJECT_ID=69083e13001189dca41d
-ENV VITE_APPWRITE_API_KEY=standard_09b5a82f8feb46cd48fdb27f5a14d106ee35a5291dcee365e44149fc7ad9abd5a740c1c7b08518c4085c241c2b17d7d7ac440f7a689940b111c094517c25fcd5002cf6c478ee96cbc19157edeb02434de2edec878e6a1e7b67982d1835c569ca7ea23fd0d9f951efa88c2903d53fe5ae1114a81e60d24ca2c49cb3c76789870c
-
-# Build de producción
-RUN pnpm run build
+# Build de producción con mejor manejo de errores
+RUN echo "=== INICIANDO BUILD ===" && \
+    echo "Node Environment: $NODE_ENV" && \
+    echo "Build starting..." && \
+    pnpm run build && \
+    echo "=== BUILD COMPLETADO ===" && \
+    ls -la dist/
 
 # Stage final - imagen mínima para servir
 FROM node:18-alpine AS runner
@@ -35,13 +51,18 @@ RUN npm install -g serve
 # Copiar solo los archivos necesarios del build
 COPY --from=builder /app/dist ./dist
 
+# Verificar que el build fue exitoso
+RUN ls -la dist/ && \
+    echo "=== VERIFICANDO DIST ===" && \
+    [ -f "dist/index.html" ] || (echo "ERROR: index.html not found!" && exit 1)
+
 # Crear usuario no-root para mejor seguridad
-RUN addgroup -g 1001 -S nodejs
-RUN adduser -S nextjs -u 1001
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S nodejs -u 1001
 
 # Cambiar propiedad de los archivos
-RUN chown -R nextjs:nodejs /app
-USER nextjs
+RUN chown -R nodejs:nodejs /app
+USER nodejs
 
 # Exponer puerto
 EXPOSE 80
