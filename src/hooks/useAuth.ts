@@ -1,0 +1,139 @@
+import { useEffect } from 'react';
+import { useAuthStore } from '@/store/authStore';
+import { authService } from '@/services/authService';
+
+export function useAuth() {
+  const {
+    user,
+    currentWorkspace,
+    workspaceUser,
+    workspaces,
+    isAuthenticated,
+    isLoading,
+    setUser,
+    setCurrentWorkspace,
+    setWorkspaceUser,
+    setWorkspaces,
+    setIsLoading,
+    logout: logoutStore,
+  } = useAuthStore();
+
+  useEffect(() => {
+    checkAuth();
+  }, []);
+
+  const checkAuth = async () => {
+    try {
+      setIsLoading(true);
+      const currentUser = await authService.getCurrentUser();
+      
+      if (currentUser) {
+        setUser({
+          $id: currentUser.$id,
+          email: currentUser.email,
+          name: currentUser.name,
+        });
+
+        // Cargar workspaces del usuario
+        const userWorkspaces = await authService.getUserWorkspaces(currentUser.$id);
+        setWorkspaces(userWorkspaces);
+
+        // Si hay workspace actual, cargar datos del usuario en ese workspace
+        if (currentWorkspace) {
+          const wspUser = await authService.getWorkspaceUser(
+            currentUser.$id,
+            currentWorkspace.$id
+          );
+          setWorkspaceUser(wspUser);
+        } else if (userWorkspaces.length > 0) {
+          // Si no hay workspace seleccionado, usar el primero
+          setCurrentWorkspace(userWorkspaces[0]);
+          const wspUser = await authService.getWorkspaceUser(
+            currentUser.$id,
+            userWorkspaces[0].$id
+          );
+          setWorkspaceUser(wspUser);
+        }
+      } else {
+        setUser(null);
+      }
+    } catch (error) {
+      console.error('Error verificando autenticación:', error);
+      setUser(null);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const login = async (email: string, password: string) => {
+    try {
+      await authService.login(email, password);
+      await checkAuth();
+      return { success: true };
+    } catch (error: any) {
+      return { success: false, error: error.message };
+    }
+  };
+
+  const register = async (email: string, password: string, name: string) => {
+    try {
+      await authService.register(email, password, name);
+      await login(email, password);
+      return { success: true };
+    } catch (error: any) {
+      return { success: false, error: error.message };
+    }
+  };
+
+  const logout = async () => {
+    try {
+      await authService.logout();
+      logoutStore();
+    } catch (error) {
+      console.error('Error en logout:', error);
+    }
+  };
+
+  const switchWorkspace = async (workspaceId: string) => {
+    try {
+      const workspace = workspaces.find(w => w.$id === workspaceId);
+      if (!workspace || !user) return;
+
+      setCurrentWorkspace(workspace);
+      
+      const wspUser = await authService.getWorkspaceUser(user.$id, workspaceId);
+      setWorkspaceUser(wspUser);
+    } catch (error) {
+      console.error('Error cambiando workspace:', error);
+    }
+  };
+
+  const hasPermission = (permission: string): boolean => {
+    if (!workspaceUser) return false;
+    return !!(workspaceUser.permissions as any)[permission];
+  };
+
+  const isRole = (role: string | string[]): boolean => {
+    if (!workspaceUser) return false;
+    if (Array.isArray(role)) {
+      return role.includes(workspaceUser.role);
+    }
+    return workspaceUser.role === role;
+  };
+
+  return {
+    user,
+    currentWorkspace,
+    workspaceUser,
+    workspaces,
+    isAuthenticated,
+    isLoading,
+    login,
+    register,
+    logout,
+    switchWorkspace,
+    hasPermission,
+    isRole,
+    refreshAuth: checkAuth,
+  };
+}

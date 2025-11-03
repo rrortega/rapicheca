@@ -1,0 +1,71 @@
+# Node modules
+node_modules
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Build outputs
+dist
+build
+.next
+out
+
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Git
+.git
+.gitignore
+README.md
+
+# CI/CD
+.github
+.gitlab-ci.yml
+.travis.yml
+circleci
+
+# Docker
+Dockerfile
+docker-compose*.yml
+.dockerignore
+
+# Development
+coverage
+.nyc_output
+.eslintcache
+
+# Cache
+.tmp
+.cache
+.parcel-cache
+
+# Logs
+logs
+*.log
+
+# Misc
+*.tgz
+*.tar.gz
+.yarn-integrity

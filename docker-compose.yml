@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  estudios-socioeconomicos:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: estudios-socioeconomicos-app
+    ports:
+      - "3000:80"
+    environment:
+      - NODE_ENV=production
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.estudios-socioeconomicos.rule=Host(`localhost`)"
+      - "traefik.http.services.estudios-socioeconomicos.loadbalancer.server.port=80"
+    
+  # Para desarrollo local con hot reload (opcional)
+  estudios-socioeconomicos-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: estudios-socioeconomicos-dev
+    ports:
+      - "5173:5173"
+    environment:
+      - NODE_ENV=development
+    volumes:
+      - .:/app
+      - /app/node_modules
+    profiles:
+      - dev
