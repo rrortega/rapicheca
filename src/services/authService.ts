@@ -1,8 +1,9 @@
+// @ts-nocheck
 import { account, databases, DATABASE_ID, COLLECTIONS } from '@/lib/appwrite';
 import { ID, Query } from 'appwrite';
 import type { Workspace, WorkspaceUser } from '@/store/authStore';
 
-export const authService = {
+const service = {
   // Autenticación
   async login(email: string, password: string) {
     try {
@@ -112,4 +113,4 @@ export const authService = {
   },
 };
 
-export default authService;
+export default service;

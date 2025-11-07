@@ -8,7 +8,7 @@ interface RetryConfig {
   baseDelay: number;
   maxDelay: number;
   exponentialBackoff: boolean;
-  retryableStatuses: number[];
+  retryableStatuses: readonly number[];
 }
 
 interface TimeoutConfig {
@@ -280,21 +280,27 @@ export class OptimizedHTTPClient {
       headers = {},
       body,
       timeout = this.defaultTimeout,
-      retry = this.defaultRetry,
+      retry: retryConfig = this.defaultRetry,
       cache,
     } = config;
+
+    // Combinar retry config con valores por defecto
+    const finalRetry: RetryConfig = {
+      ...this.defaultRetry,
+      ...retryConfig,
+    };
 
     // Aplicar cache si está habilitado
     if (cache?.enabled) {
       const cacheKey = `${method}:${url}:${JSON.stringify(body || headers)}`;
       return CACHE_STRATEGIES[cache.strategy](
         cacheKey,
-        () => this.executeRequest<T>(url, method, headers, body, timeout, retry),
+        () => this.executeRequest<T>(url, method, headers, body, timeout, finalRetry),
         cache.ttl
       );
     }
 
-    return this.executeRequest<T>(url, method, headers, body, timeout, retry);
+    return this.executeRequest<T>(url, method, headers, body, timeout, finalRetry);
   }
 
   private async executeRequest<T>(
@@ -414,7 +420,8 @@ export class OptimizedHTTPClient {
    * Eliminar entrada específica del cache
    */
   invalidateCache(pattern: string): void {
-    const keys = Array.from(apiCache.cache.keys());
+    // Necesitamos exponer el método de getKeys en la clase APICache o usar una aproximación diferente
+    const keys = Array.from(apiCache['cache'].keys());
     keys.forEach(key => {
       if (key.includes(pattern)) {
         apiCache.delete(key);

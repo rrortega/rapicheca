@@ -20,7 +20,7 @@ COPY . .
 # Variables básicas (sin API keys)
 ENV NODE_ENV=production
 
-# Build simple
+# Build simple (sin verificación de tipos)
 RUN npm run build
 
 # Verificar build

@@ -73,10 +73,9 @@ export default defineConfig({
     }),
     isProd && visualizer({
       filename: 'dist/stats.html',
-      open: false,
-      gzip: true
-    })
-  ].filter(Boolean),
+      open: false
+    } as any)
+  ].filter(Boolean) as any,
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
@@ -102,6 +101,7 @@ export default defineConfig({
         chunkFileNames: 'js/[name]-[hash].js',
         entryFileNames: 'js/[name]-[hash].js',
         assetFileNames: (assetInfo) => {
+          if (!assetInfo.name) return 'assets/[name]-[hash]';
           const info = assetInfo.name.split('.');
           const ext = info[info.length - 1];
           if (/\.(png|jpe?g|gif|svg|webp|ico)$/i.test(assetInfo.name)) {

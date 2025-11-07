@@ -34,7 +34,10 @@
     "noUncheckedIndexedAccess": false,
     "noImplicitReturns": false,
     "noImplicitThis": false,
-    "noPropertyAccessFromIndexSignature": false
+    "noPropertyAccessFromIndexSignature": false,
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "allowJs": true
   },
   "include": [
     "src"

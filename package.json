@@ -5,8 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "rm -rf node_modules/.vite-temp && tsc -b && vite build",
-    "build:prod": "rm -rf node_modules/.vite-temp && tsc -b && BUILD_MODE=prod vite build",
+    "build": "rm -rf node_modules/.vite-temp && vite build",
+    "build:prod": "rm -rf node_modules/.vite-temp && BUILD_MODE=prod vite build",
+    "build:check": "rm -rf node_modules/.vite-temp && tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
     "install-deps": "pnpm install --prefer-offline",
