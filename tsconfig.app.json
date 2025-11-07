@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "composite": true,
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
     "target": "ES2020",
     "useDefineForClassFields": true,
@@ -33,8 +34,7 @@
     "noUncheckedIndexedAccess": false,
     "noImplicitReturns": false,
     "noImplicitThis": false,
-    "noPropertyAccessFromIndexSignature": false,
-    "noUncheckedSideEffectImports": false
+    "noPropertyAccessFromIndexSignature": false
   },
   "include": [
     "src"
