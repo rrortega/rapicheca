@@ -5,41 +5,38 @@
 El error 401 "User (role: guests) missing scope (account)" se producía porque:
 
 1. El usuario tenía rol "guests" en Appwrite
-2. No tenía asignado el scope "account" necesario para `account.get()`
+2. No tenía asignado el scope "account" necesario para `account.get()` y `getSession()`
 3. El sistema no manejaba correctamente este tipo de errores de autorización
 
 ## Solución Implementada
 
 ### 1. Mejoras en `authService.ts`
 
-#### Nuevo método `getCurrentUser()` (líneas 35-67)
-- Verifica primero si hay una sesión activa con `getSession('current')`
+#### Método `getCurrentUser()` mejorado (líneas 35-62)
+- Intenta directamente `account.get()` para usuarios con permisos limitados
 - Detecta específicamente errores 401 por falta de permisos
 - Limpia automáticamente la sesión en caso de error de autorización
-- Maneja graciosamente diferentes tipos de errores
+- Maneja graciosamente diferentes tipos de errores sin fallar
 
-#### Nuevo método `checkSession()` (líneas 69-91)
-- Verifica el estado y validez de la sesión actual
-- Comprueba si la sesión ha expirado
-- Limpia sesiones expiradas automáticamente
+#### Método `checkSession()` robusto (líneas 64-98)
+- Maneja errores 401 de `getSession()` apropiadamente
+- Detecta cuando el usuario no tiene permisos para verificar sesión
+- Retorna estado "no_permissions" en lugar de fallar
 - Proporciona información detallada sobre el estado de la sesión
 
-#### Nuevo método `createSession()` (líneas 93-116)
+#### Método `createSession()` mejorado (líneas 100-123)
 - Limpia cualquier sesión existente antes de crear una nueva
 - Maneja errores de creación de forma más robusta
 - Proporciona información detallada sobre errores
 
 ### 2. Mejoras en `useAuth.ts`
 
-#### Actualización de `checkAuth()` (líneas 25-71)
-- Usa `checkSession()` antes de intentar obtener el usuario
+#### Actualización de `checkAuth()` simplificada (líneas 25-70)
+- Elimina verificación previa de sesión para evitar errores 401
+- Intenta obtener usuario directamente
 - Maneja errores de forma más eficiente
 - Limpia completamente el estado en caso de problemas
-
-#### Actualización de `login()` (líneas 77-90)
-- Usa el nuevo método `createSession()` más robusto
-- Proporciona mejor información de error
-- Maneja códigos de error específicos
+- Ahora es más tolerante a errores de autorización
 
 ### 3. Script de Diagnóstico
 

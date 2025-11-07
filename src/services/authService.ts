@@ -34,29 +34,21 @@ const service = {
 
   async getCurrentUser() {
     try {
-      // Primero verificar si hay una sesión activa
-      const session = await account.getSession('current');
-      
-      // Si hay sesión, intentar obtener el usuario
-      if (session) {
-        return await account.get();
-      }
-      
-      return null;
+      // Para usuarios con rol "guests", intentar directamente account.get()
+      // Si falla, retornar null sin intentar verificaciones adicionales
+      return await account.get();
     } catch (error) {
-      // Si es un error de autorización, limpiar la sesión y retornar null
-      if (error?.code === 401 || error?.type === 'general_unauthorized_scope' || error?.message?.includes('missing scope')) {
-        console.warn('Usuario no autorizado o sin permisos, limpiando sesión');
-        try {
-          // Intentar limpiar la sesión actual
-          await account.deleteSession('current');
-        } catch (deleteError) {
-          console.error('Error al limpiar sesión:', deleteError);
-        }
+      // Si es un error de autorización por falta de permisos, asumir usuario no autenticado
+      if (error?.code === 401 || error?.type === 'general_unauthorized_scope' ||
+          error?.message?.includes('missing scope') || error?.message?.includes('role: guests')) {
+        console.log('Usuario con permisos limitados (guests), asumiendo no autenticado');
+        
+        // No intentar limpiar la sesión si no tenemos permisos
+        // Simplemente retornar null y continuar
         return null;
       }
       
-      // Para otros errores, verificar si es porque no hay sesión
+      // Para otros errores de sesión, retornar null
       if (error?.code === 401 || error?.message?.includes('No active session')) {
         return null;
       }
@@ -69,21 +61,33 @@ const service = {
   // Método adicional para verificar el estado de la sesión
   async checkSession() {
     try {
-      const session = await account.getSession('current');
-      if (session) {
-        // Verificar que la sesión es válida
-        const now = new Date().getTime();
-        const expiresAt = new Date(session.expire).getTime();
-        
-        if (expiresAt > now) {
-          return { valid: true, session };
-        } else {
-          console.warn('Sesión expirada, eliminando...');
-          await account.deleteSession('current');
-          return { valid: false, reason: 'expired' };
+      // Para usuarios con rol "guests", incluso getSession puede fallar
+      // Manejar esto de forma más elegante
+      try {
+        const session = await account.getSession('current');
+        if (session) {
+          // Verificar que la sesión es válida
+          const now = new Date().getTime();
+          const expiresAt = new Date(session.expire).getTime();
+          
+          if (expiresAt > now) {
+            return { valid: true, session };
+          } else {
+            console.warn('Sesión expirada, eliminando...');
+            await account.deleteSession('current');
+            return { valid: false, reason: 'expired' };
+          }
         }
+        return { valid: false, reason: 'no_session' };
+      } catch (sessionError) {
+        // Si getSession falla, puede ser por falta de permisos
+        if (sessionError?.code === 401 || sessionError?.type === 'general_unauthorized_scope' ||
+            sessionError?.message?.includes('missing scope')) {
+          console.log('Usuario sin permisos para verificar sesión, asumiendo no autenticado');
+          return { valid: false, reason: 'no_permissions' };
+        }
+        throw sessionError; // Re-lanzar otros errores
       }
-      return { valid: false, reason: 'no_session' };
     } catch (error) {
       console.error('Error verificando sesión:', error);
       return { valid: false, reason: 'error', error: error.message };

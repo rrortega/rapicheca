@@ -26,15 +26,8 @@ export function useAuth() {
     try {
       setIsLoading(true);
       
-      // Primero verificar el estado de la sesión
-      const sessionStatus = await authService.checkSession();
-      
-      if (!sessionStatus.valid) {
-        console.log('Sesión no válida:', sessionStatus.reason);
-        logoutStore();
-        return;
-      }
-      
+      // Simplificar: intentar obtener usuario directamente
+      // Si falla, asumir que no está autenticado
       const currentUser = await authService.getCurrentUser();
       
       if (currentUser) {
@@ -71,7 +64,7 @@ export function useAuth() {
       }
     } catch (error) {
       console.error('Error verificando autenticación:', error);
-      // En caso de error, limpiar el estado
+      // En caso de cualquier error, limpiar el estado
       logoutStore();
     } finally {
       setIsLoading(false);
