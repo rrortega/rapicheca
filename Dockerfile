@@ -46,4 +46,4 @@ USER nodejs
 EXPOSE 80
 
 # Comando
-CMD ["serve", "-s", "dist", "-p", "80", "--host", "0.0.0.0"]
+CMD ["serve", "-s", "dist", "-p", "80"]
