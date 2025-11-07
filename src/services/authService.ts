@@ -34,17 +34,24 @@ const service = {
 
   async getCurrentUser() {
     try {
-      // Para usuarios con rol "guests", intentar directamente account.get()
-      // Si falla, retornar null sin intentar verificaciones adicionales
+      // Solo intentar obtener usuario si tenemos una sesión válida
+      // Verificar primero si hay sesión sin provocar error 401
+      const sessionResult = await this.checkSession();
+      
+      if (!sessionResult.valid) {
+        if (process.env.NODE_ENV === 'development') {
+          console.log('No hay sesión válida, no autenticado');
+        }
+        return null;
+      }
+      
+      // Solo si la sesión es válida, intentar obtener el usuario
       return await account.get();
     } catch (error) {
       // Si es un error de autorización por falta de permisos, asumir usuario no autenticado
       if (error?.code === 401 || error?.type === 'general_unauthorized_scope' ||
           error?.message?.includes('missing scope') || error?.message?.includes('role: guests')) {
-        console.log('Usuario con permisos limitados (guests), asumiendo no autenticado');
-        
-        // No intentar limpiar la sesión si no tenemos permisos
-        // Simplemente retornar null y continuar
+        // No log para evitar spam en consola
         return null;
       }
       
@@ -53,7 +60,10 @@ const service = {
         return null;
       }
       
-      console.error('Error obteniendo usuario actual:', error);
+      // Solo log de errores reales en desarrollo
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Error obteniendo usuario actual:', error);
+      }
       return null;
     }
   },
@@ -61,36 +71,34 @@ const service = {
   // Método adicional para verificar el estado de la sesión
   async checkSession() {
     try {
-      // Para usuarios con rol "guests", incluso getSession puede fallar
-      // Manejar esto de forma más elegante
-      try {
-        const session = await account.getSession('current');
-        if (session) {
-          // Verificar que la sesión es válida
-          const now = new Date().getTime();
-          const expiresAt = new Date(session.expire).getTime();
-          
-          if (expiresAt > now) {
-            return { valid: true, session };
-          } else {
+      // Para usuarios con rol "guests", getSession puede fallar con 401
+      // Manejar esto de forma completamente silenciosa
+      const session = await account.getSession('current');
+      if (session) {
+        // Verificar que la sesión es válida
+        const now = new Date().getTime();
+        const expiresAt = new Date(session.expire).getTime();
+        
+        if (expiresAt > now) {
+          return { valid: true, session };
+        } else {
+          // Solo log en desarrollo
+          if (process.env.NODE_ENV === 'development') {
             console.warn('Sesión expirada, eliminando...');
-            await account.deleteSession('current');
-            return { valid: false, reason: 'expired' };
           }
+          try {
+            await account.deleteSession('current');
+          } catch (deleteError) {
+            // Ignorar errores de limpieza
+          }
+          return { valid: false, reason: 'expired' };
         }
-        return { valid: false, reason: 'no_session' };
-      } catch (sessionError) {
-        // Si getSession falla, puede ser por falta de permisos
-        if (sessionError?.code === 401 || sessionError?.type === 'general_unauthorized_scope' ||
-            sessionError?.message?.includes('missing scope')) {
-          console.log('Usuario sin permisos para verificar sesión, asumiendo no autenticado');
-          return { valid: false, reason: 'no_permissions' };
-        }
-        throw sessionError; // Re-lanzar otros errores
       }
-    } catch (error) {
-      console.error('Error verificando sesión:', error);
-      return { valid: false, reason: 'error', error: error.message };
+      return { valid: false, reason: 'no_session' };
+    } catch (sessionError) {
+      // Si getSession falla por cualquier razón, asumir no autenticado
+      // No log para evitar spam en consola
+      return { valid: false, reason: 'no_permissions' };
     }
   },
 
