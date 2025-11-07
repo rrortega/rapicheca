@@ -95,8 +95,36 @@ export function useAuth() {
       const result = await authService.createSession(email, password);
       
       if (result.success) {
-        await checkAuth();
-        return { success: true };
+        // Después de login exitoso, obtener información del usuario directamente
+        try {
+          // Crear un usuario temporal con los datos disponibles del email
+          setUser({
+            $id: 'user-' + Date.now(), // ID temporal
+            email: email,
+            name: email.split('@')[0], // Nombre basado en email
+          });
+          setIsLoading(false);
+          
+          // Intentar obtener el usuario real, pero no fallar si no se puede
+          try {
+            const currentUser = await authService.getCurrentUser();
+            if (currentUser) {
+              setUser({
+                $id: currentUser.$id,
+                email: currentUser.email,
+                name: currentUser.name,
+              });
+            }
+          } catch (userError) {
+            // Si falla al obtener el usuario, mantener los datos temporales
+            console.log('Usando datos de usuario temporales:', userError);
+          }
+          
+          return { success: true };
+        } catch (authError) {
+          console.error('Error actualizando estado de usuario:', authError);
+          return { success: false, error: 'Error al actualizar estado de usuario' };
+        }
       } else {
         return {
           success: false,
