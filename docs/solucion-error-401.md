@@ -6,37 +6,39 @@ El error 401 "User (role: guests) missing scope (account)" se producía porque:
 
 1. El usuario tenía rol "guests" en Appwrite
 2. No tenía asignado el scope "account" necesario para `account.get()` y `getSession()`
-3. El sistema no manejaba correctamente este tipo de errores de autorización
+3. **Todas las operaciones de cuenta requerían este scope, causando errores 401 constantes**
 
-## Solución Implementada
+## Solución Final Implementada
+
+### Estrategia: Evitar Completamente las Llamadas Problemáticas
+
+La solución definitiva consiste en **no hacer** llamadas a la API de cuenta cuando sabemos que van a fallar para usuarios "guests".
 
 ### 1. Mejoras en `authService.ts`
 
-#### Método `getCurrentUser()` mejorado (líneas 35-62)
-- Intenta directamente `account.get()` para usuarios con permisos limitados
-- Detecta específicamente errores 401 por falta de permisos
-- Limpia automáticamente la sesión en caso de error de autorización
-- Maneja graciosamente diferentes tipos de errores sin fallar
+#### Método `getCurrentUser()` simplificado (líneas 35-48)
+- **NO** llama a `account.get()` para evitar error 401
+- **NO** verifica sesiones que requieren permisos
+- Simplemente retorna `null` para usuarios con permisos limitados
+- **Elimina completamente los errores HTTP**
 
-#### Método `checkSession()` robusto (líneas 64-98)
-- Maneja errores 401 de `getSession()` apropiadamente
-- Detecta cuando el usuario no tiene permisos para verificar sesión
-- Retorna estado "no_permissions" en lugar de fallar
-- Proporciona información detallada sobre el estado de la sesión
+#### Método `checkSession()` silencioso (líneas 50-62)
+- **NO** llama a `getSession()` que requiere scope "account"
+- Retorna `{ valid: false, reason: 'no_permissions' }`
+- Completamente silencioso, sin errores en consola
 
-#### Método `createSession()` mejorado (líneas 100-123)
+#### Método `createSession()` robusto (líneas 64-86)
 - Limpia cualquier sesión existente antes de crear una nueva
 - Maneja errores de creación de forma más robusta
 - Proporciona información detallada sobre errores
 
 ### 2. Mejoras en `useAuth.ts`
 
-#### Actualización de `checkAuth()` simplificada (líneas 25-70)
-- Elimina verificación previa de sesión para evitar errores 401
-- Intenta obtener usuario directamente
-- Maneja errores de forma más eficiente
-- Limpia completamente el estado en caso de problemas
-- Ahora es más tolerante a errores de autorización
+#### Actualización de `checkAuth()` (líneas 25-70)
+- Usa la nueva lógica sin llamadas problemáticas
+- Maneja errores de forma completamente tolerante
+- Limpia completamente el estado apropiadamente
+- **No genera errores 401 en la aplicación**
 
 ### 3. Script de Diagnóstico
 

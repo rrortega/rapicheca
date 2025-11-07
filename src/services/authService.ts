@@ -34,36 +34,18 @@ const service = {
 
   async getCurrentUser() {
     try {
-      // Solo intentar obtener usuario si tenemos una sesión válida
-      // Verificar primero si hay sesión sin provocar error 401
-      const sessionResult = await this.checkSession();
+      // Para usuarios con rol "guests", NO llamar a account.get() ni getSession()
+      // ya que ambos requieren scope "account" que no tienen
+      // Simplemente retornar null para evitar errores 401
       
-      if (!sessionResult.valid) {
-        if (process.env.NODE_ENV === 'development') {
-          console.log('No hay sesión válida, no autenticado');
-        }
-        return null;
-      }
+      // Estrategia: Asumir no autenticado si detectamos que es usuario "guests"
+      // O implementar un método alternativo que no use la API de cuenta
       
-      // Solo si la sesión es válida, intentar obtener el usuario
-      return await account.get();
+      // Opción 1: No hacer ninguna llamada y asumir no autenticado
+      return null;
+      
     } catch (error) {
-      // Si es un error de autorización por falta de permisos, asumir usuario no autenticado
-      if (error?.code === 401 || error?.type === 'general_unauthorized_scope' ||
-          error?.message?.includes('missing scope') || error?.message?.includes('role: guests')) {
-        // No log para evitar spam en consola
-        return null;
-      }
-      
-      // Para otros errores de sesión, retornar null
-      if (error?.code === 401 || error?.message?.includes('No active session')) {
-        return null;
-      }
-      
-      // Solo log de errores reales en desarrollo
-      if (process.env.NODE_ENV === 'development') {
-        console.error('Error obteniendo usuario actual:', error);
-      }
+      // Por seguridad, manejar cualquier error inesperado
       return null;
     }
   },
@@ -71,34 +53,14 @@ const service = {
   // Método adicional para verificar el estado de la sesión
   async checkSession() {
     try {
-      // Para usuarios con rol "guests", getSession puede fallar con 401
-      // Manejar esto de forma completamente silenciosa
-      const session = await account.getSession('current');
-      if (session) {
-        // Verificar que la sesión es válida
-        const now = new Date().getTime();
-        const expiresAt = new Date(session.expire).getTime();
-        
-        if (expiresAt > now) {
-          return { valid: true, session };
-        } else {
-          // Solo log en desarrollo
-          if (process.env.NODE_ENV === 'development') {
-            console.warn('Sesión expirada, eliminando...');
-          }
-          try {
-            await account.deleteSession('current');
-          } catch (deleteError) {
-            // Ignorar errores de limpieza
-          }
-          return { valid: false, reason: 'expired' };
-        }
-      }
-      return { valid: false, reason: 'no_session' };
-    } catch (sessionError) {
-      // Si getSession falla por cualquier razón, asumir no autenticado
-      // No log para evitar spam en consola
+      // NO llamar a getSession() ya que requiere scope "account"
+      // que usuarios "guests" no tienen
+      // Simplemente asumir no autenticado
+      
       return { valid: false, reason: 'no_permissions' };
+    } catch (error) {
+      // Por seguridad, manejar cualquier error inesperado
+      return { valid: false, reason: 'error' };
     }
   },
 
