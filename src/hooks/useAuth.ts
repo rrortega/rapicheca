@@ -24,15 +24,11 @@ export function useAuth() {
     // Solo ejecutar checkAuth una vez al montar el componente
     if (!hasCheckedAuth.current) {
       hasCheckedAuth.current = true;
-      // Si no hay usuario en el store, verificar autenticación
-      if (!user) {
-        checkAuth();
-      } else {
-        // Si hay usuario persistido, asegurar que isLoading sea false
-        setIsLoading(false);
-      }
+      // Verificar autenticación al montar el componente
+      checkAuth();
     }
-  }, [user]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const checkAuth = async () => {
     try {

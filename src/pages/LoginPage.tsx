@@ -11,11 +11,9 @@ export default function LoginPage() {
   const [isSubmitLoading, setIsSubmitLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // Debug: log the current state
+  // Auto-navegar al dashboard si ya está autenticado
   useEffect(() => {
-    console.log('LoginPage - isAuthenticated:', isAuthenticated, 'isLoading:', isLoading);
     if (isAuthenticated && !isLoading) {
-      console.log('Auto-navegando al dashboard por estado de autenticación');
       navigate('/dashboard', { replace: true });
     }
   }, [isAuthenticated, isLoading, navigate]);
