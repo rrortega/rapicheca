@@ -1,34 +1,63 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Loader2, Building2 } from 'lucide-react';
 
 export default function LoginPage() {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, isAuthenticated, isLoading } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitLoading, setIsSubmitLoading] = useState(false);
   const [error, setError] = useState('');
+
+  // Debug: log the current state
+  useEffect(() => {
+    console.log('LoginPage - isAuthenticated:', isAuthenticated, 'isLoading:', isLoading);
+    if (isAuthenticated) {
+      navigate('/dashboard');
+    }
+  }, [isAuthenticated, isLoading, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    setIsLoading(true);
+    setIsSubmitLoading(true);
 
     try {
       const result = await login(email, password);
       if (result.success) {
-        navigate('/dashboard');
+        console.log('Login successful, should navigate to dashboard');
       } else {
         setError(result.error || 'Error al iniciar sesion');
       }
     } catch (err) {
       setError('Error al iniciar sesion');
     } finally {
-      setIsLoading(false);
+      setIsSubmitLoading(false);
     }
   };
+
+  // Si está cargando (verificando autenticación), mostrar loading
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+      </div>
+    );
+  }
+
+  // Si ya está autenticado, no renderizar el login
+  if (isAuthenticated) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin text-blue-600 mx-auto mb-4" />
+          <p>Redirigiendo al dashboard...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center p-4">
@@ -71,6 +100,7 @@ export default function LoginPage() {
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                 placeholder="tu@empresa.com"
                 required
+                disabled={isSubmitLoading}
               />
             </div>
 
@@ -86,15 +116,16 @@ export default function LoginPage() {
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                 placeholder="••••••••"
                 required
+                disabled={isSubmitLoading}
               />
             </div>
 
             <button
               type="submit"
-              disabled={isLoading}
+              disabled={isSubmitLoading}
               className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
             >
-              {isLoading ? (
+              {isSubmitLoading ? (
                 <>
                   <Loader2 className="h-5 w-5 animate-spin mr-2" />
                   Iniciando sesion...
@@ -111,6 +142,7 @@ export default function LoginPage() {
               <button
                 onClick={() => navigate('/register')}
                 className="text-blue-600 hover:text-blue-700 font-medium"
+                disabled={isSubmitLoading}
               >
                 Registrate
               </button>

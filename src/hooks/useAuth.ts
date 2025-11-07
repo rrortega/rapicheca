@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useAuthStore } from '@/store/authStore';
 import authService from '@/services/authService';
 
@@ -18,9 +18,21 @@ export function useAuth() {
     logout: logoutStore,
   } = useAuthStore();
 
+  const hasCheckedAuth = useRef(false);
+
   useEffect(() => {
-    checkAuth();
-  }, []);
+    // Solo ejecutar checkAuth una vez al montar el componente
+    if (!hasCheckedAuth.current) {
+      hasCheckedAuth.current = true;
+      // Si no hay usuario en el store, verificar autenticación
+      if (!user) {
+        checkAuth();
+      } else {
+        // Si hay usuario persistido, asegurar que isLoading sea false
+        setIsLoading(false);
+      }
+    }
+  }, [user]);
 
   const checkAuth = async () => {
     try {
@@ -60,12 +72,18 @@ export function useAuth() {
       } else {
         // Usuario no autenticado o error de autorización
         // Limpiar todo el estado de autenticación
-        logoutStore();
+        setUser(null);
+        setWorkspaces([]);
+        setCurrentWorkspace(null);
+        setWorkspaceUser(null);
       }
     } catch (error) {
       console.error('Error verificando autenticación:', error);
       // En caso de cualquier error, limpiar el estado
-      logoutStore();
+      setUser(null);
+      setWorkspaces([]);
+      setCurrentWorkspace(null);
+      setWorkspaceUser(null);
     } finally {
       setIsLoading(false);
     }

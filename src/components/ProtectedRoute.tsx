@@ -23,6 +23,7 @@ export function ProtectedRoute() {
 export function PublicRoute() {
   const { isAuthenticated, isLoading } = useAuth();
 
+  // Si está cargando, mostrar loading (pero por tiempo limitado)
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -31,9 +32,11 @@ export function PublicRoute() {
     );
   }
 
+  // Si está autenticado, redirigir al dashboard
   if (isAuthenticated) {
     return <Navigate to="/dashboard" replace />;
   }
 
+  // Si no está autenticado, mostrar la página pública
   return <Outlet />;
 }

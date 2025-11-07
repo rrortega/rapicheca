@@ -79,7 +79,7 @@ export const useAuthStore = create<AuthState>()(
       workspaceUser: null,
       workspaces: [],
       isAuthenticated: false,
-      isLoading: true,
+      isLoading: false,
 
       setUser: (user) =>
         set({ user, isAuthenticated: !!user }),
