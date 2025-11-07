@@ -1,226 +1,41 @@
-import { useEffect, useState } from 'react';
-import { useAuth } from '@/hooks/useAuth';
-import { casesService } from '@/services/casesService';
-import { creditsService } from '@/services/creditsService';
-import {
-  LayoutDashboard,
-  FileText,
-  Users,
-  CreditCard,
-  TrendingUp,
-  AlertCircle,
-  CheckCircle,
-  Clock,
-  XCircle,
-} from 'lucide-react';
-
 export default function DashboardPage() {
-  const { currentWorkspace, workspaceUser } = useAuth();
-  const [stats, setStats] = useState<any>(null);
-  const [credits, setCredits] = useState(0);
-  const [consumptionStats, setConsumptionStats] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    if (currentWorkspace) {
-      loadDashboardData();
-    }
-  }, [currentWorkspace]);
-
-  const loadDashboardData = async () => {
-    if (!currentWorkspace) return;
-
-    try {
-      setLoading(true);
-      const [caseStats, balance, consumption] = await Promise.all([
-        casesService.getCaseStats(currentWorkspace.$id),
-        creditsService.getBalance(currentWorkspace.$id),
-        creditsService.getConsumptionStats(currentWorkspace.$id, 30),
-      ]);
-
-      setStats(caseStats);
-      setCredits(balance);
-      setConsumptionStats(consumption);
-    } catch (error) {
-      console.error('Error cargando datos del dashboard:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Cargando dashboard...</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-              <p className="mt-1 text-sm text-gray-500">
-                {currentWorkspace?.name} - {workspaceUser?.role}
+      {/* Header simple */}
+      <header className="bg-white shadow">
+        <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center">
+            <h1 className="text-3xl font-bold text-gray-900">
+              Dashboard
+            </h1>
+            <a
+              href="/login"
+              className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+            >
+              Ir a Login
+            </a>
+          </div>
+        </div>
+      </header>
+
+      {/* Main content simple */}
+      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+        <div className="px-4 py-6 sm:px-0">
+          <div className="border-4 border-dashed border-gray-200 rounded-lg h-96 flex items-center justify-center">
+            <div className="text-center">
+              <h2 className="text-xl font-semibold text-gray-700 mb-2">
+                Dashboard del Sistema
+              </h2>
+              <p className="text-gray-500">
+                Esta es la página del dashboard sin autenticación.
+              </p>
+              <p className="text-sm text-gray-400 mt-2">
+                Para una versión completa con autenticación, implementar ProtectedRoute.
               </p>
             </div>
-            <div className="flex items-center space-x-4">
-              <div className="bg-blue-50 px-4 py-2 rounded-lg">
-                <p className="text-xs text-blue-600 font-medium">Creditos disponibles</p>
-                <p className="text-2xl font-bold text-blue-900">{credits}</p>
-              </div>
-            </div>
           </div>
         </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* KPIs */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Total Casos</p>
-                <p className="text-3xl font-bold text-gray-900 mt-2">{stats?.total || 0}</p>
-              </div>
-              <div className="bg-blue-100 p-3 rounded-lg">
-                <FileText className="h-6 w-6 text-blue-600" />
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">En Proceso</p>
-                <p className="text-3xl font-bold text-yellow-600 mt-2">{stats?.in_progress || 0}</p>
-              </div>
-              <div className="bg-yellow-100 p-3 rounded-lg">
-                <Clock className="h-6 w-6 text-yellow-600" />
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Completados</p>
-                <p className="text-3xl font-bold text-green-600 mt-2">{stats?.completed || 0}</p>
-              </div>
-              <div className="bg-green-100 p-3 rounded-lg">
-                <CheckCircle className="h-6 w-6 text-green-600" />
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Rechazados</p>
-                <p className="text-3xl font-bold text-red-600 mt-2">{stats?.rejected || 0}</p>
-              </div>
-              <div className="bg-red-100 p-3 rounded-lg">
-                <XCircle className="h-6 w-6 text-red-600" />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Consumo de Creditos */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
-              Consumo de Creditos (30 dias)
-            </h3>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">Consumo Total</span>
-                <span className="text-lg font-bold text-red-600">
-                  -{consumptionStats?.total_consumption || 0}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">Recargas</span>
-                <span className="text-lg font-bold text-green-600">
-                  +{consumptionStats?.total_topups || 0}
-                </span>
-              </div>
-              <div className="flex items-center justify-between pt-4 border-t border-gray-200">
-                <span className="text-sm font-medium text-gray-900">Cambio Neto</span>
-                <span className={`text-lg font-bold ${
-                  (consumptionStats?.net_change || 0) >= 0 ? 'text-green-600' : 'text-red-600'
-                }`}>
-                  {consumptionStats?.net_change || 0}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
-              Casos por Prioridad
-            </h3>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <div className="w-3 h-3 bg-red-500 rounded-full mr-3"></div>
-                  <span className="text-sm text-gray-600">Alta</span>
-                </div>
-                <span className="text-lg font-bold text-gray-900">
-                  {stats?.by_priority?.high || 0}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <div className="w-3 h-3 bg-yellow-500 rounded-full mr-3"></div>
-                  <span className="text-sm text-gray-600">Media</span>
-                </div>
-                <span className="text-lg font-bold text-gray-900">
-                  {stats?.by_priority?.medium || 0}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <div className="w-3 h-3 bg-green-500 rounded-full mr-3"></div>
-                  <span className="text-sm text-gray-600">Baja</span>
-                </div>
-                <span className="text-lg font-bold text-gray-900">
-                  {stats?.by_priority?.low || 0}
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Accesos Rapidos */}
-        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">
-            Accesos Rapidos
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <button className="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition">
-              <FileText className="h-5 w-5 text-blue-600 mr-3" />
-              <span className="text-sm font-medium text-gray-900">Nuevo Caso</span>
-            </button>
-            <button className="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition">
-              <LayoutDashboard className="h-5 w-5 text-blue-600 mr-3" />
-              <span className="text-sm font-medium text-gray-900">Builder de Plantillas</span>
-            </button>
-            <button className="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition">
-              <CreditCard className="h-5 w-5 text-blue-600 mr-3" />
-              <span className="text-sm font-medium text-gray-900">Recargar Creditos</span>
-            </button>
-          </div>
-        </div>
-      </div>
+      </main>
     </div>
   );
 }
