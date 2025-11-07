@@ -1,8 +1,13 @@
-import { Navigate, Outlet } from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Loader2 } from 'lucide-react';
+import { ReactNode } from 'react';
 
-export function ProtectedRoute() {
+interface RouteWrapperProps {
+  children: ReactNode;
+}
+
+export function ProtectedRoute({ children }: RouteWrapperProps) {
   const { isAuthenticated, isLoading } = useAuth();
 
   if (isLoading) {
@@ -17,10 +22,10 @@ export function ProtectedRoute() {
     return <Navigate to="/login" replace />;
   }
 
-  return <Outlet />;
+  return <>{children}</>;
 }
 
-export function PublicRoute() {
+export function PublicRoute({ children }: RouteWrapperProps) {
   const { isAuthenticated, isLoading } = useAuth();
 
   // Si está cargando, mostrar loading (pero por tiempo limitado)
@@ -38,5 +43,5 @@ export function PublicRoute() {
   }
 
   // Si no está autenticado, mostrar la página pública
-  return <Outlet />;
+  return <>{children}</>;
 }
