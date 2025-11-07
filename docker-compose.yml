@@ -5,11 +5,6 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-      args:
-        # Variables de build para Appwrite
-        VITE_APPWRITE_HOST: ${VITE_APPWRITE_HOST:-https://aw.chamba.pro}
-        VITE_APPWRITE_PROJECT_ID: ${VITE_APPWRITE_PROJECT_ID:-69083e13001189dca41d}
-        VITE_APPWRITE_API_KEY: ${VITE_APPWRITE_API_KEY}
     image: estudios-socioeconomicos:${BUILD_TAG:-latest}
     container_name: estudios-socioeconomicos-app
     restart: unless-stopped
@@ -17,6 +12,9 @@ services:
       - "80:80"
     environment:
       - NODE_ENV=production
+      - VITE_APPWRITE_HOST=${VITE_APPWRITE_HOST:-https://aw.chamba.pro}
+      - VITE_APPWRITE_PROJECT_ID=${VITE_APPWRITE_PROJECT_ID:-69083e13001189dca41d}
+      - VITE_APPWRITE_API_KEY=${VITE_APPWRITE_API_KEY}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:80"]
       interval: 30s
@@ -40,16 +38,14 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.dev
-      args:
-        # Variables de desarrollo
-        VITE_APPWRITE_HOST: ${VITE_APPWRITE_HOST:-https://aw.chamba.pro}
-        VITE_APPWRITE_PROJECT_ID: ${VITE_APPWRITE_PROJECT_ID:-69083e13001189dca41d}
-        VITE_APPWRITE_API_KEY: ${VITE_APPWRITE_API_KEY}
     container_name: estudios-socioeconomicos-dev
     ports:
       - "5173:5173"
     environment:
       - NODE_ENV=development
+      - VITE_APPWRITE_HOST=${VITE_APPWRITE_HOST:-https://aw.chamba.pro}
+      - VITE_APPWRITE_PROJECT_ID=${VITE_APPWRITE_PROJECT_ID:-69083e13001189dca41d}
+      - VITE_APPWRITE_API_KEY=${VITE_APPWRITE_API_KEY}
     volumes:
       - .:/app
       - /app/node_modules

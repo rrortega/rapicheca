@@ -1,5 +1,52 @@
 # Changelog - Estudios Socioeconómicos 📋
 
+## [2025-11-03 23:14] - Ultra-Secure Deployment Fix
+
+### 🔒 **Solución Final Sin Vulnerabilidades**
+
+#### **Critical Fix: Eliminación Total de Vulnerabilidades**
+- **Problema:** ARG y ENV para API key detectadas como vulnerables
+- **Riesgo:** API keys expuestas en imágenes Docker
+- **Solución Final:**
+  - ✅ Eliminadas TODAS las API keys del Dockerfile
+  - ✅ Variables manejadas únicamente en runtime (container)
+  - ✅ Build time: sin variables sensibles
+  - ✅ Runtime: variables pasadas como ENV al container
+
+#### **Build Simplificado**
+- **Problema:** `pnpm run build` con scripts complejos causaba exit code 1
+- **Solución:**
+  - ✅ Scripts simplificados en package.json
+  - ✅ Dependencias instaladas antes del build (fuera del script)
+  - ✅ Build reducido a solo `npm run build`
+
+### 🛠️ **Arquitectura Final Segura**
+
+```dockerfile
+# ANTES (Vulnerable):
+ARG VITE_APPWRITE_API_KEY
+ENV VITE_APPWRITE_API_KEY=${VITE_APPWRITE_API_KEY}
+
+# DESPUÉS (Ultra-Seguro):
+# Dockerfile: SIN variables sensibles
+# Container: Variables pasadas en runtime
+docker run -e VITE_APPWRITE_API_KEY="$API_KEY" image:latest
+```
+
+### 🆕 **Nuevos Scripts y Archivos**
+
+- **`deploy-secure.sh`** - Deployment sin vulnerabilidades
+- **`setup-appwrite.sh`** - Configuración segura de variables
+- **`package.json`** - Scripts simplificados
+- **`docker-compose.yml`** - Variables en runtime únicamente
+
+### 🎯 **Beneficios de Seguridad**
+
+1. **🔒 API Keys No Exposición:** Nunca en imagen Docker
+2. **🛡️ Runtime Variables:** Variables pasadas al container solamente
+3. **📦 Build Limpio:** Solo código, sin secretos
+4. **🔄 Deployment Seguro:** Variables configuradas dinámicamente
+
 ## [2025-11-03 22:40] - Security & Build Fixes
 
 ### 🔒 **Correcciones de Seguridad**
