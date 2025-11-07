@@ -55,11 +55,14 @@ export function useAuth() {
           setWorkspaceUser(wspUser);
         }
       } else {
-        setUser(null);
+        // Usuario no autenticado o error de autorización
+        // Limpiar todo el estado de autenticación
+        logoutStore();
       }
     } catch (error) {
       console.error('Error verificando autenticación:', error);
-      setUser(null);
+      // En caso de error, limpiar el estado
+      logoutStore();
     } finally {
       setIsLoading(false);
     }

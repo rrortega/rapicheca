@@ -36,6 +36,19 @@ const service = {
     try {
       return await account.get();
     } catch (error) {
+      // Si es un error de autorización, limpiar la sesión y retornar null
+      if (error?.code === 401 || error?.type === 'general_unauthorized_scope') {
+        console.warn('Usuario no autorizado, limpiando sesión');
+        try {
+          // Intentar limpiar la sesión actual
+          await account.deleteSession('current');
+        } catch (deleteError) {
+          console.error('Error al limpiar sesión:', deleteError);
+        }
+        return null;
+      }
+      
+      console.error('Error obteniendo usuario actual:', error);
       return null;
     }
   },
