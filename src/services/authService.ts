@@ -34,11 +34,19 @@ const service = {
 
   async getCurrentUser() {
     try {
-      return await account.get();
+      // Primero verificar si hay una sesión activa
+      const session = await account.getSession('current');
+      
+      // Si hay sesión, intentar obtener el usuario
+      if (session) {
+        return await account.get();
+      }
+      
+      return null;
     } catch (error) {
       // Si es un error de autorización, limpiar la sesión y retornar null
-      if (error?.code === 401 || error?.type === 'general_unauthorized_scope') {
-        console.warn('Usuario no autorizado, limpiando sesión');
+      if (error?.code === 401 || error?.type === 'general_unauthorized_scope' || error?.message?.includes('missing scope')) {
+        console.warn('Usuario no autorizado o sin permisos, limpiando sesión');
         try {
           // Intentar limpiar la sesión actual
           await account.deleteSession('current');
@@ -48,8 +56,62 @@ const service = {
         return null;
       }
       
+      // Para otros errores, verificar si es porque no hay sesión
+      if (error?.code === 401 || error?.message?.includes('No active session')) {
+        return null;
+      }
+      
       console.error('Error obteniendo usuario actual:', error);
       return null;
+    }
+  },
+
+  // Método adicional para verificar el estado de la sesión
+  async checkSession() {
+    try {
+      const session = await account.getSession('current');
+      if (session) {
+        // Verificar que la sesión es válida
+        const now = new Date().getTime();
+        const expiresAt = new Date(session.expire).getTime();
+        
+        if (expiresAt > now) {
+          return { valid: true, session };
+        } else {
+          console.warn('Sesión expirada, eliminando...');
+          await account.deleteSession('current');
+          return { valid: false, reason: 'expired' };
+        }
+      }
+      return { valid: false, reason: 'no_session' };
+    } catch (error) {
+      console.error('Error verificando sesión:', error);
+      return { valid: false, reason: 'error', error: error.message };
+    }
+  },
+
+  // Método mejorado para crear sesión de forma más robusta
+  async createSession(email: string, password: string) {
+    try {
+      // Limpiar cualquier sesión existente primero
+      try {
+        await account.deleteSession('current');
+      } catch (deleteError) {
+        // Ignorar errores al limpiar sesión
+        console.log('No había sesión previa para limpiar');
+      }
+
+      // Crear nueva sesión
+      const session = await account.createEmailPasswordSession(email, password);
+      
+      return { success: true, session };
+    } catch (error) {
+      console.error('Error creando sesión:', error);
+      return {
+        success: false,
+        error: error.message,
+        code: error.code
+      };
     }
   },
 

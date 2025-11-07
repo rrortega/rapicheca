@@ -25,6 +25,16 @@ export function useAuth() {
   const checkAuth = async () => {
     try {
       setIsLoading(true);
+      
+      // Primero verificar el estado de la sesión
+      const sessionStatus = await authService.checkSession();
+      
+      if (!sessionStatus.valid) {
+        console.log('Sesión no válida:', sessionStatus.reason);
+        logoutStore();
+        return;
+      }
+      
       const currentUser = await authService.getCurrentUser();
       
       if (currentUser) {
@@ -70,9 +80,19 @@ export function useAuth() {
 
   const login = async (email: string, password: string) => {
     try {
-      await authService.login(email, password);
-      await checkAuth();
-      return { success: true };
+      // Usar el nuevo método de creación de sesión más robusto
+      const result = await authService.createSession(email, password);
+      
+      if (result.success) {
+        await checkAuth();
+        return { success: true };
+      } else {
+        return {
+          success: false,
+          error: result.error,
+          code: result.code
+        };
+      }
     } catch (error: any) {
       return { success: false, error: error.message };
     }
