@@ -1,70 +1,52 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Loader2, Building2 } from 'lucide-react';
 
-export default function LoginPage() {
+export default function RegisterPage() {
   const navigate = useNavigate();
-  const { login, isAuthenticated, isLoading } = useAuth();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [isSubmitLoading, setIsSubmitLoading] = useState(false);
+  const { register } = useAuth();
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    password: '',
+    confirmPassword: ''
+  });
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-
-  // Debug: log the current state
-  useEffect(() => {
-    console.log('LoginPage - isAuthenticated:', isAuthenticated, 'isLoading:', isLoading);
-    if (isAuthenticated && !isLoading) {
-      console.log('Auto-navegando al dashboard por estado de autenticación');
-      navigate('/dashboard', { replace: true });
-    }
-  }, [isAuthenticated, isLoading, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    setIsSubmitLoading(true);
+
+    if (formData.password !== formData.confirmPassword) {
+      setError('Las contraseñas no coinciden');
+      return;
+    }
+
+    setIsLoading(true);
 
     try {
-      console.log('Intentando login con:', email);
-      const result = await login(email, password);
-      console.log('Resultado del login:', result);
-      
+      const result = await register(formData.email, formData.password, formData.name);
       if (result.success) {
-        console.log('Login exitoso, navegando al dashboard');
-        // Navegación inmediata y forzada
-        navigate('/dashboard', { replace: true });
+        console.log('Registration successful');
+        navigate('/dashboard');
       } else {
-        setError(result.error || 'Error al iniciar sesion');
+        setError(result.error || 'Error al registrarse');
       }
     } catch (err) {
-      console.error('Error en login:', err);
-      setError('Error al iniciar sesion');
+      setError('Error al registrarse');
     } finally {
-      setIsSubmitLoading(false);
+      setIsLoading(false);
     }
   };
 
-  // Si está cargando (verificando autenticación), mostrar loading
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-      </div>
-    );
-  }
-
-  // Si ya está autenticado, no renderizar el login
-  if (isAuthenticated) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin text-blue-600 mx-auto mb-4" />
-          <p>Redirigiendo al dashboard...</p>
-        </div>
-      </div>
-    );
-  }
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData(prev => ({
+      ...prev,
+      [e.target.name]: e.target.value
+    }));
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center p-4">
@@ -75,17 +57,17 @@ export default function LoginPage() {
             <Building2 className="h-8 w-8 text-white" />
           </div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Estudios Socioeconomicos
+            Crear Cuenta
           </h1>
           <p className="text-gray-600">
-            Plataforma multi-tenant de automatizacion
+            Únete a la plataforma de estudios socioeconómicos
           </p>
         </div>
 
-        {/* Formulario de login */}
+        {/* Formulario de registro */}
         <div className="bg-white rounded-2xl shadow-xl p-8">
           <h2 className="text-2xl font-bold text-gray-900 mb-6">
-            Iniciar Sesion
+            Registro
           </h2>
 
           {error && (
@@ -96,70 +78,105 @@ export default function LoginPage() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
+              <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
+                Nombre completo
+              </label>
+              <input
+                id="name"
+                name="name"
+                type="text"
+                value={formData.name}
+                onChange={handleChange}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                placeholder="Tu nombre completo"
+                required
+                disabled={isLoading}
+              />
+            </div>
+
+            <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                Correo electronico
+                Correo electrónico
               </label>
               <input
                 id="email"
+                name="email"
                 type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                value={formData.email}
+                onChange={handleChange}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                 placeholder="tu@empresa.com"
                 required
-                disabled={isSubmitLoading}
+                disabled={isLoading}
               />
             </div>
 
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
-                Contrasena
+                Contraseña
               </label>
               <input
                 id="password"
+                name="password"
                 type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                value={formData.password}
+                onChange={handleChange}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                 placeholder="••••••••"
                 required
-                disabled={isSubmitLoading}
+                disabled={isLoading}
+              />
+            </div>
+
+            <div>
+              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">
+                Confirmar contraseña
+              </label>
+              <input
+                id="confirmPassword"
+                name="confirmPassword"
+                type="password"
+                value={formData.confirmPassword}
+                onChange={handleChange}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                placeholder="••••••••"
+                required
+                disabled={isLoading}
               />
             </div>
 
             <button
               type="submit"
-              disabled={isSubmitLoading}
+              disabled={isLoading}
               className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
             >
-              {isSubmitLoading ? (
+              {isLoading ? (
                 <>
                   <Loader2 className="h-5 w-5 animate-spin mr-2" />
-                  Iniciando sesion...
+                  Creando cuenta...
                 </>
               ) : (
-                'Iniciar Sesion'
+                'Crear Cuenta'
               )}
             </button>
           </form>
 
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-600">
-              No tienes cuenta?{' '}
-              <button
-                onClick={() => navigate('/register')}
+              ¿Ya tienes cuenta?{' '}
+              <Link
+                to="/login"
                 className="text-blue-600 hover:text-blue-700 font-medium"
-                disabled={isSubmitLoading}
               >
-                Registrate
-              </button>
+                Inicia sesión
+              </Link>
             </p>
           </div>
         </div>
 
         {/* Footer */}
         <div className="mt-8 text-center text-sm text-gray-500">
-          <p>Sistema protegido con autenticacion multi-tenant</p>
+          <p>Sistema seguro de registro multi-tenant</p>
         </div>
       </div>
     </div>
